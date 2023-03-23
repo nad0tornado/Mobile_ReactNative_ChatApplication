@@ -1,12 +1,12 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import "expo-dev-client";
+import React from "react";
+import { StyleSheet, View, Text } from "react-native";
+import { ChatClient } from "./components/chatClient";
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <ChatClient />
     </View>
   );
 }
@@ -14,8 +14,10 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 10,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    background: "red",
   },
 });
