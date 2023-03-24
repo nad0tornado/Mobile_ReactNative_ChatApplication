@@ -1,11 +1,11 @@
 package com.chatapplication.models;
 
-public class Greeting {
+public class ExampleModel {
     
     private final long id;
     private final String content;
 
-    public Greeting(long id, String content) {
+    public ExampleModel(long id, String content) {
         this.id = id;
         this.content = content;
     }

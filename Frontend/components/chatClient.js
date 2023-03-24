@@ -1,5 +1,5 @@
 import { MessageBubble } from "./messageBubble";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Dimensions } from "react-native";
+import { Client } from "@stomp/stompjs";
 
 export const ChatClient = () => {
   const me = "User 1";
@@ -32,6 +33,44 @@ export const ChatClient = () => {
     { user: "User 1", text: "Hello" },
     { user: "User 2", text: "Hello" },
   ]);
+
+  useEffect(() => {
+    // Create a WebSocket connection
+    const socket = new WebSocket("ws://localhost:8080/chat");
+
+    // Create a STOMP client over the WebSocket connection
+    const client = new Client({
+      brokerURL: "ws://localhost:8080/chat",
+      onConnect: () => doWelcome(),
+      webSocketFactory: () => socket,
+      debug: function (msg) {
+        console.log(msg);
+      },
+    });
+
+    const doWelcome = () => {
+      // Subscribe to the "/topic/messages" topic to receive broadcasted messages
+      client.subscribe("/topic/messages", function (message) {
+        console.log("Received: " + message.body);
+      });
+
+      // Send a message to the "/app/hello" endpoint
+      const message = { name: "Alice" };
+      client.publish({
+        destination: "/hello",
+        body: JSON.stringify(message),
+      });
+    };
+
+    // Connect to the STOMP server
+    client.activate();
+
+    // Disconnect from the STOMP server and close the WebSocket connection when the component unmounts
+    return function cleanup() {
+      client.deactivate();
+      socket.close();
+    };
+  }, []);
 
   const handleKeyDown = (e) => {
     if (e.nativeEvent.key == "Enter") {
