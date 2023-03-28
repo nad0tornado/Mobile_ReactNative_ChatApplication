@@ -1,5 +1,5 @@
 import { MessageBubble } from "./messageBubble";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -37,6 +37,8 @@ export const ChatClient = () => {
   ]);
   const [client, setClient] = useState();
 
+  const scrollViewRef = useRef();
+
   useEffect(() => {
     // Create a WebSocket connection
     const socket = new WebSocket(`ws://${secret}:8080/chat`);
@@ -73,6 +75,10 @@ export const ChatClient = () => {
       socket.close();
     };
   }, []);
+
+  useEffect(() => {
+    scrollViewRef.current.scrollToEnd({ animated: true });
+  }, [messages]);
 
   const handleKeyDown = (e) => {
     if (e.nativeEvent.key == "Enter") {
@@ -120,7 +126,7 @@ export const ChatClient = () => {
           onKeyPress={handleUsernameKeyDown}
         />
       </View>
-      <ScrollView style={styles.messagesContainer}>
+      <ScrollView ref={scrollViewRef} style={styles.messagesContainer}>
         {messages.map((m, i) => (
           <MessageBubble
             key={i}
