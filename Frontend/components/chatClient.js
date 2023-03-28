@@ -11,36 +11,39 @@ import {
 import { Dimensions } from "react-native";
 import { Client } from "@stomp/stompjs";
 
+import secret from "../_dat";
+
 export const ChatClient = () => {
-  const me = "User 1";
+  const [meUsername, setMeUsername] = useState("User 1");
 
   const [inputText, setInputText] = useState("");
 
   const [messages, setMessages] = useState([
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
-    { user: "User 3", text: "Hello" },
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
-    { user: "User 1", text: "Hello" },
-    { user: "User 2", text: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
+    { name: "User 3", content: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
+    { name: "User 1", content: "Hello" },
+    { name: "User 2", content: "Hello" },
   ]);
+  const [client, setClient] = useState();
 
   useEffect(() => {
     // Create a WebSocket connection
-    const socket = new WebSocket("ws://localhost:8080/chat");
+    const socket = new WebSocket(`ws://${secret}:8080/chat`);
 
     // Create a STOMP client over the WebSocket connection
     const client = new Client({
-      brokerURL: "ws://localhost:8080/chat",
+      brokerURL: `ws://${secret}:8080/chat`,
       onConnect: () => doWelcome(),
       webSocketFactory: () => socket,
       debug: function (msg) {
@@ -52,14 +55,13 @@ export const ChatClient = () => {
       // Subscribe to the "/topic/messages" topic to receive broadcasted messages
       client.subscribe("/topic/messages", function (message) {
         console.log("Received: " + message.body);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          JSON.parse(message.body),
+        ]);
       });
 
-      // Send a message to the "/app/hello" endpoint
-      const message = { name: "Alice" };
-      client.publish({
-        destination: "/hello",
-        body: JSON.stringify(message),
-      });
+      setClient(client);
     };
 
     // Connect to the STOMP server
@@ -75,22 +77,56 @@ export const ChatClient = () => {
   const handleKeyDown = (e) => {
     if (e.nativeEvent.key == "Enter") {
       handleSendMessage();
-      dismissKeyboard();
+      typeof dismissKeyboard === "function" && dismissKeyboard();
+    }
+  };
+
+  const handleUsernameKeyDown = (e) => {
+    if (e.nativeEvent.key == "Enter") {
+      handleSendMessage();
+      typeof dismissKeyboard === "function" && dismissKeyboard();
     }
   };
 
   const handleSendMessage = () => {
     if (inputText === "") return;
 
+    // Send a message to the "/app/hello" endpoint
+    const message = { name: meUsername, content: inputText };
+    client.publish({
+      destination: "/topic/messages",
+      body: JSON.stringify(message),
+    });
+
     setInputText("");
-    setMessages([...messages, { user: me, text: inputText }]);
   };
 
   return (
     <View style={styles.container}>
+      <Text style={{ fontWeight: "bold" }}>Your Username</Text>
+      <View
+        style={{
+          ...styles.chatInputContainer,
+          alignItems: "left",
+          flex: 1 / 20,
+          marginBottom: 5,
+          marginTop: 0,
+        }}
+      >
+        <TextInput
+          value={meUsername}
+          style={{ width: "100%" }}
+          onChangeText={setMeUsername}
+          onKeyPress={handleUsernameKeyDown}
+        />
+      </View>
       <ScrollView style={styles.messagesContainer}>
         {messages.map((m, i) => (
-          <MessageBubble key={i} {...m} user={m.user === me ? "You" : m.user} />
+          <MessageBubble
+            key={i}
+            {...m}
+            name={m.name === meUsername ? "You" : m.name}
+          />
         ))}
       </ScrollView>
       <View style={styles.chatInputContainer}>
@@ -136,6 +172,11 @@ const styles = StyleSheet.create({
   },
   chatInputTextbox: {
     flex: 3 / 4,
+    display: "flex",
+    justifyContent: "center",
+    minHeight: 50,
+  },
+  usernameInputTextbox: {
     display: "flex",
     justifyContent: "center",
     minHeight: 50,
